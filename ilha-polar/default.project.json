@@ -1,0 +1,67 @@
+{
+  "name": "IlhaPolar",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/shared"
+      }
+    },
+    "ServerScriptService": {
+      "Server": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "$properties": {
+        "CameraMode": "LockFirstPerson",
+        "LoadCharacterAppearance": false,
+        "CharacterWalkSpeed": 20
+      },
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/client"
+        }
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "ClockTime": 13.5,
+        "Brightness": 3,
+        "Ambient": [
+          0.5,
+          0.5,
+          0.55
+        ],
+        "OutdoorAmbient": [
+          0.65,
+          0.65,
+          0.7
+        ],
+        "GlobalShadows": true
+      },
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.22,
+          "Haze": 0.6,
+          "Color": [
+            0.78,
+            0.88,
+            1.0
+          ],
+          "Decay": [
+            0.55,
+            0.75,
+            0.95
+          ]
+        }
+      }
+    },
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}
