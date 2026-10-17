@@ -1,4 +1,4 @@
--- Minigame de pesca na Doca.
+-- Minigame de pesca (Porto e Píer do Veleiro).
 --
 -- Fluxo: o jogador ativa um ponto de pesca -> espera alguns segundos -> o peixe
 -- morde -> ele tem `reactionWindow` segundos para puxar. Todo o tempo é

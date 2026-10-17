@@ -1,8 +1,8 @@
--- Mapa ilustrado da ilha. Abre pelo botão redondo no canto esquerdo ou pela tecla M.
+-- Mapa da ilha. Abre pelo botão redondo no canto esquerdo ou pela tecla M.
 --
--- O desenho é feito só com Frames (sem imagens), então funciona sem enviar
--- nenhum asset para o Roblox. Cada lugar é um ícone clicável que teleporta;
--- lugares que ainda não existem aparecem com cadeado.
+-- Mostra a imagem oficial do mapa (Config.MapImage) com um ponto clicável em
+-- cada lugar; clicar teleporta. Enquanto a imagem não foi enviada ao Roblox,
+-- desenha a ilha a partir do IslandLayout, nas mesmas posições.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,6 +10,7 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local Layout = require(ReplicatedStorage.Shared.IslandLayout)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Hud = require(script.Parent.Hud)
 
@@ -20,64 +21,31 @@ local MapController = {}
 
 local PALETTE = {
 	oceanTop = Color3.fromRGB(70, 175, 235),
-	oceanBottom = Color3.fromRGB(25, 105, 190),
-	shallow = Color3.fromRGB(140, 220, 245),
-	snow = Color3.fromRGB(240, 246, 255),
-	rock = Color3.fromRGB(140, 160, 195),
-	rockDark = Color3.fromRGB(110, 128, 165),
+	oceanBottom = Color3.fromRGB(25, 115, 200),
+	shallow = Color3.fromRGB(130, 215, 240),
+	sand = Color3.fromRGB(240, 220, 160),
+	grass = Color3.fromRGB(110, 190, 70),
+	rock = Color3.fromRGB(120, 125, 135),
+	stone = Color3.fromRGB(205, 195, 190),
+	water = Color3.fromRGB(120, 210, 240),
 	wood = Color3.fromRGB(130, 85, 50),
-	ice = Color3.fromRGB(175, 225, 245),
 	pill = Color3.fromRGB(25, 50, 90),
-	locked = Color3.fromRGB(190, 195, 205),
 }
 
--- Forma da ilha: vários "comprimidos" sobrepostos dão um contorno irregular.
--- { posição do centro, tamanho }, tudo em fração do quadro do mapa.
-local ISLAND = {
-	{ Vector2.new(0.47, 0.55), Vector2.new(0.56, 0.56) },
-	{ Vector2.new(0.28, 0.52), Vector2.new(0.32, 0.46) },
-	{ Vector2.new(0.68, 0.55), Vector2.new(0.36, 0.46) },
-	{ Vector2.new(0.42, 0.32), Vector2.new(0.4, 0.3) },
-	{ Vector2.new(0.55, 0.77), Vector2.new(0.4, 0.24) },
-	{ Vector2.new(0.14, 0.56), Vector2.new(0.17, 0.18) },
-	{ Vector2.new(0.82, 0.5), Vector2.new(0.16, 0.26) },
-	{ Vector2.new(0.32, 0.76), Vector2.new(0.22, 0.22) },
-}
+local IMAGE = Layout.IMAGE_SIZE
 
--- Montanhas: { centro, altura (fração da altura do mapa) }
-local MOUNTAINS = {
-	{ Vector2.new(0.27, 0.28), 0.13 },
-	{ Vector2.new(0.37, 0.22), 0.2 },
-	{ Vector2.new(0.49, 0.19), 0.24 },
-	{ Vector2.new(0.6, 0.25), 0.15 },
-}
-
-local TREES = {
-	Vector2.new(0.2, 0.42),
-	Vector2.new(0.24, 0.63),
-	Vector2.new(0.22, 0.38),
-	Vector2.new(0.38, 0.46),
-	Vector2.new(0.4, 0.62),
-	Vector2.new(0.62, 0.62),
-	Vector2.new(0.66, 0.69),
-	Vector2.new(0.63, 0.31),
-	Vector2.new(0.8, 0.37),
-	Vector2.new(0.86, 0.56),
-	Vector2.new(0.68, 0.58),
-	Vector2.new(0.43, 0.84),
-	Vector2.new(0.68, 0.84),
-	Vector2.new(0.45, 0.68),
-}
-
-local function scale(v: Vector2): UDim2
-	return UDim2.fromScale(v.X, v.Y)
+-- Pixel da imagem -> posição relativa dentro do quadro do mapa.
+local function rel(x: number, y: number): UDim2
+	return UDim2.fromScale(x / IMAGE.X, y / IMAGE.Y)
 end
 
-local function blob(parent: Instance, center: Vector2, size: Vector2, color: Color3, z: number)
+-- Círculo de raio `r` pixels da imagem (continua redondo porque o quadro tem
+-- a mesma proporção da imagem).
+local function circle(parent: Instance, x: number, y: number, r: number, color: Color3, z: number): Frame
 	return create("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = scale(center),
-		Size = scale(size),
+		Position = rel(x, y),
+		Size = UDim2.fromScale(r * 2 / IMAGE.X, r * 2 / IMAGE.Y),
 		BackgroundColor3 = color,
 		BorderSizePixel = 0,
 		ZIndex = z,
@@ -85,172 +53,93 @@ local function blob(parent: Instance, center: Vector2, size: Vector2, color: Col
 	}, { create("UICorner", { CornerRadius = UDim.new(0.5, 0) }) })
 end
 
-local function emoji(parent: Instance, text: string, center: Vector2, size: Vector2, z: number)
-	return Hud.label({
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = scale(center),
-		Size = scale(size),
-		Text = text,
-		ZIndex = z,
-		Parent = parent,
-	})
-end
-
--- Desenha a ilha (tudo que não é clicável).
-local function drawIsland(board: Frame)
-	-- Água rasa em volta e a ilha por cima.
-	for _, piece in ISLAND do
-		blob(board, piece[1], piece[2] * Vector2.new(1.12, 1.16), PALETTE.shallow, 1).BackgroundTransparency = 0.3
-	end
-	for _, piece in ISLAND do
-		blob(board, piece[1], piece[2], PALETTE.snow, 2)
-	end
-
-	-- Montanhas: quadrados girados 45° viram picos; a ponta de cima ganha neve
-	-- e a base fica escondida atrás de uma faixa de neve desenhada por cima.
-	for _, mountain in MOUNTAINS do
-		local peak = create("Frame", {
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = scale(mountain[1]),
-			Size = UDim2.fromScale(mountain[2], mountain[2]),
-			SizeConstraint = Enum.SizeConstraint.RelativeYY,
-			Rotation = 45,
-			BackgroundColor3 = PALETTE.rock,
-			BorderSizePixel = 0,
-			ZIndex = 3,
-			Parent = board,
-		}, {
-			create("UIGradient", {
-				Color = ColorSequence.new(PALETTE.rock, PALETTE.rockDark),
-				Rotation = 45,
-			}),
-		})
-		-- O canto superior esquerdo do quadrado vira o topo depois de girar.
-		create("Frame", {
-			Size = UDim2.fromScale(0.42, 0.42),
-			BackgroundColor3 = PALETTE.snow,
-			BorderSizePixel = 0,
-			Parent = peak,
-		})
-	end
-	blob(board, Vector2.new(0.43, 0.35), Vector2.new(0.46, 0.13), PALETTE.snow, 4)
-
-	-- Lago congelado e píer da doca.
-	blob(board, Vector2.new(0.8, 0.7), Vector2.new(0.11, 0.09), PALETTE.ice, 4)
-	create("Frame", {
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.fromScale(0.22, 0.82),
-		Size = UDim2.fromScale(0.02, 0.12),
-		BackgroundColor3 = PALETTE.wood,
-		BorderSizePixel = 0,
-		ZIndex = 4,
+-- Desenho simplificado da ilha (usado só sem a imagem oficial).
+local function drawFallback(board: Frame)
+	create("UIGradient", {
+		Color = ColorSequence.new(PALETTE.oceanTop, PALETTE.oceanBottom),
+		Rotation = 90,
 		Parent = board,
 	})
-	create("Frame", {
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromScale(0.22, 0.93),
-		Size = UDim2.fromScale(0.05, 0.02),
-		BackgroundColor3 = PALETTE.wood,
-		BorderSizePixel = 0,
-		ZIndex = 4,
-		Parent = board,
-	})
-	emoji(board, "⛵", Vector2.new(0.13, 0.86), Vector2.new(0.05, 0.08), 4)
-
-	for _, position in TREES do
-		emoji(board, "🌲", position, Vector2.new(0.035, 0.06), 5)
+	for _, land in Layout.LAND do
+		circle(board, land[1], land[2], land[3] + 10, PALETTE.shallow, 1).BackgroundTransparency = 0.4
 	end
-
-	-- Detalhes do mar.
-	for _, position in
-		{ Vector2.new(0.08, 0.2), Vector2.new(0.9, 0.85), Vector2.new(0.12, 0.85), Vector2.new(0.92, 0.2) }
-	do
-		local wave = emoji(board, "〰", position, Vector2.new(0.06, 0.05), 1)
-		wave.TextColor3 = PALETTE.shallow
-		wave.TextTransparency = 0.3
+	for _, land in Layout.LAND do
+		circle(board, land[1], land[2], land[3], PALETTE.sand, 2)
 	end
-	emoji(board, "🧭", Vector2.new(0.93, 0.1), Vector2.new(0.06, 0.1), 6)
+	for _, land in Layout.LAND do
+		if not land[4] then
+			circle(board, land[1], land[2], land[3] * Layout.GRASS_RATIO, PALETTE.grass, 3)
+		end
+	end
+	for _, cliff in Layout.CLIFFS do
+		circle(board, cliff[1], cliff[2] + 6, cliff[3], PALETTE.rock, 4)
+		local top = circle(board, cliff[1], cliff[2], cliff[3] * 0.95, PALETTE.grass, 4)
+		top.BackgroundColor3 = PALETTE.grass:Lerp(Color3.new(1, 1, 1), math.min(cliff[4] / 80, 0.4))
+	end
+	for _, pool in Layout.POOLS do
+		circle(board, pool[1], pool[2], pool[3], PALETTE.water, 5)
+	end
+	local plaza = Layout.PLAZA
+	circle(board, plaza[1], plaza[2], plaza[3], PALETTE.stone, 5)
 end
 
--- Um ícone de lugar no mapa. Retorna o botão.
-local function placePin(
-	board: Frame,
-	name: string,
-	icon: string,
-	position: Vector2,
-	color: Color3,
-	locked: boolean
-): TextButton
+-- Ponto clicável de um lugar.
+local function placePin(board: Frame, room, alwaysShowName: boolean): TextButton
 	local button = create("TextButton", {
-		Name = name,
+		Name = room.id,
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = scale(position),
-		Size = UDim2.fromScale(0.13, 0.19),
-		BackgroundTransparency = 1,
+		Position = rel(room.map.X, room.map.Y),
+		Size = UDim2.fromScale(0.042, 0.042),
+		SizeConstraint = Enum.SizeConstraint.RelativeXX,
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundTransparency = 0.3,
 		AutoButtonColor = false,
 		Text = "",
-		ZIndex = 8,
+		ZIndex = 10,
 		Parent = board,
-	})
-	local zoom = create("UIScale", { Parent = button })
-
-	local circle = create("Frame", {
-		Name = "Icone",
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.fromScale(0.5, 0),
-		Size = UDim2.fromScale(0.7, 0.7),
-		SizeConstraint = Enum.SizeConstraint.RelativeYY,
-		BackgroundColor3 = if locked then PALETTE.locked else Color3.new(1, 1, 1),
-		Parent = button,
 	}, {
 		create("UICorner", { CornerRadius = UDim.new(0.5, 0) }),
-		create("UIStroke", {
-			Thickness = 3,
-			Color = if locked then PALETTE.rockDark else color,
-		}),
+		create("UIStroke", { Name = "Borda", Thickness = 3, Color = PALETTE.pill }),
 	})
+	local zoom = create("UIScale", { Parent = button })
 	Hud.label({
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromScale(0.72, 0.72),
-		Text = icon,
-		TextTransparency = if locked then 0.45 else 0,
-		Parent = circle,
+		Text = room.icon,
+		ZIndex = 11,
+		Parent = button,
 	})
-	if locked then
-		Hud.label({
-			AnchorPoint = Vector2.new(1, 1),
-			Position = UDim2.fromScale(1.05, 1.05),
-			Size = UDim2.fromScale(0.42, 0.42),
-			Text = "🔒",
-			Parent = circle,
-		})
-	end
 
 	local tag = create("Frame", {
-		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.fromScale(0.5, 1),
-		Size = UDim2.fromScale(1.2, 0.27),
-		BackgroundColor3 = if locked then PALETTE.rockDark else PALETTE.pill,
-		BackgroundTransparency = 0.1,
+		Name = "Nome",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 1, 4),
+		Size = UDim2.fromScale(3.4, 0.6),
+		BackgroundColor3 = PALETTE.pill,
+		BackgroundTransparency = 0.05,
+		Visible = alwaysShowName,
+		ZIndex = 12,
 		Parent = button,
 	}, { create("UICorner", { CornerRadius = UDim.new(0.5, 0) }) })
 	Hud.label({
-		Size = UDim2.fromScale(0.9, 0.8),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
-		Text = name,
+		Size = UDim2.fromScale(0.92, 0.8),
+		Text = room.name,
+		ZIndex = 13,
 		Parent = tag,
 	})
 
 	local grow = TweenInfo.new(0.12)
 	button.MouseEnter:Connect(function()
-		TweenService:Create(zoom, grow, { Scale = 1.15 }):Play()
+		tag.Visible = true
+		TweenService:Create(zoom, grow, { Scale = 1.2 }):Play()
 	end)
 	button.MouseLeave:Connect(function()
+		tag.Visible = alwaysShowName
 		TweenService:Create(zoom, grow, { Scale = 1 }):Play()
 	end)
-
 	return button
 end
 
@@ -306,31 +195,41 @@ end
 
 function MapController.start()
 	local content, panel =
-		Hud.panel("Mapa", "🗺️ Mapa da " .. Config.GameName, UDim2.fromScale(0.86, 0.86), Vector2.new(1100, 760))
+		Hud.panel("Mapa", "🗺️ Mapa da " .. Config.GameName, UDim2.fromScale(0.92, 0.9), Vector2.new(1280, 820))
 
 	local board = create("Frame", {
 		Name = "Ilha",
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.fromScale(0.5, 0),
-		Size = UDim2.new(1, 0, 1, -40),
+		Size = UDim2.new(1, 0, 1, -36),
 		BackgroundColor3 = Color3.new(1, 1, 1),
 		ClipsDescendants = true,
 		Parent = content,
 	}, {
-		create("UIAspectRatioConstraint", { AspectRatio = 1.6 }),
+		create("UIAspectRatioConstraint", { AspectRatio = IMAGE.X / IMAGE.Y }),
 		create("UICorner", { CornerRadius = UDim.new(0, 14) }),
-		create("UIGradient", {
-			Color = ColorSequence.new(PALETTE.oceanTop, PALETTE.oceanBottom),
-			Rotation = 90,
-		}),
 	})
 	local boardZoom = create("UIScale", { Parent = board })
+
+	if Config.MapImage ~= "" then
+		create("ImageLabel", {
+			Name = "Imagem",
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
+			Image = Config.MapImage,
+			ScaleType = Enum.ScaleType.Stretch,
+			ZIndex = 1,
+			Parent = board,
+		}, { create("UICorner", { CornerRadius = UDim.new(0, 14) }) })
+	else
+		drawFallback(board)
+	end
 
 	local info = Hud.label({
 		Name = "Info",
 		AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.fromScale(0.5, 1),
-		Size = UDim2.new(1, 0, 0, 32),
+		Size = UDim2.new(1, 0, 0, 30),
 		Font = Enum.Font.GothamMedium,
 		Text = "",
 		Parent = content,
@@ -338,15 +237,13 @@ function MapController.start()
 	local defaultInfo = "Clique em um lugar para ir até lá."
 	info.Text = defaultInfo
 
-	drawIsland(board)
-
-	-- Lugares de verdade
+	local touchOnly = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 	local pins: { [string]: TextButton } = {}
 	for _, room in Config.Rooms do
-		local button = placePin(board, room.name, room.map.icon, room.map.position, room.map.color, false)
+		local button = placePin(board, room, touchOnly)
 		pins[room.id] = button
 		button.MouseEnter:Connect(function()
-			info.Text = ("%s %s: %s"):format(room.map.icon, room.name, room.description)
+			info.Text = ("%s %s: %s"):format(room.icon, room.name, room.description)
 		end)
 		button.MouseLeave:Connect(function()
 			info.Text = defaultInfo
@@ -361,27 +258,13 @@ function MapController.start()
 		end)
 	end
 
-	-- Lugares futuros
-	for _, place in Config.MapComingSoon do
-		local button = placePin(board, place.name, place.icon, place.position, PALETTE.locked, true)
-		button.MouseEnter:Connect(function()
-			info.Text = ("%s %s: em breve!"):format(place.icon, place.name)
-		end)
-		button.MouseLeave:Connect(function()
-			info.Text = defaultInfo
-		end)
-		button.Activated:Connect(function()
-			Hud.toast(("%s ainda está em construção. Em breve!"):format(place.name))
-		end)
-	end
-
-	-- Marcador "Você está aqui", que flutua em cima do lugar atual.
+	-- Marcador "Você está aqui", flutuando em cima do lugar atual.
 	local here = create("Frame", {
 		Name = "VoceEstaAqui",
 		AnchorPoint = Vector2.new(0.5, 1),
-		Size = UDim2.fromScale(0.16, 0.055),
+		Size = UDim2.fromScale(0.15, 0.05),
 		BackgroundColor3 = Hud.colors.accent,
-		ZIndex = 10,
+		ZIndex = 20,
 		Visible = false,
 		Parent = board,
 	}, { create("UICorner", { CornerRadius = UDim.new(0.5, 0) }) })
@@ -391,6 +274,7 @@ function MapController.start()
 		Size = UDim2.fromScale(0.9, 0.75),
 		Text = "📍 Você está aqui",
 		TextColor3 = PALETTE.pill,
+		ZIndex = 21,
 		Parent = here,
 	})
 	local bob: Tween? = nil
@@ -401,28 +285,27 @@ function MapController.start()
 			bob:Cancel()
 			bob = nil
 		end
+		for id, button in pins do
+			local stroke = button:FindFirstChild("Borda") :: UIStroke?
+			if stroke then
+				stroke.Color = if room and id == room.id then Hud.colors.accent else PALETTE.pill
+				stroke.Thickness = if room and id == room.id then 5 else 3
+			end
+		end
 		if not room then
 			here.Visible = false
 			return
 		end
-		local top = UDim2.fromScale(room.map.position.X, room.map.position.Y - 0.1)
+		local top = rel(room.map.X, room.map.Y) - UDim2.fromScale(0, 0.06)
 		here.Position = top
 		here.Visible = true
 		local tween = TweenService:Create(
 			here,
 			TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-			{ Position = top - UDim2.fromScale(0, 0.015) }
+			{ Position = top - UDim2.fromScale(0, 0.012) }
 		)
 		tween:Play()
 		bob = tween
-
-		for id, button in pins do
-			local circle = button:FindFirstChild("Icone")
-			local stroke = circle and circle:FindFirstChildOfClass("UIStroke")
-			if stroke then
-				stroke.Thickness = if id == room.id then 5 else 3
-			end
-		end
 	end
 	player:GetAttributeChangedSignal("Room"):Connect(updateHere)
 	updateHere()
@@ -436,7 +319,7 @@ function MapController.start()
 			return -- pescando ou com outra janela aberta
 		end
 		panel.open()
-		boardZoom.Scale = 0.92
+		boardZoom.Scale = 0.94
 		TweenService:Create(boardZoom, TweenInfo.new(0.18, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 	end
 

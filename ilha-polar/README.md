@@ -34,13 +34,25 @@ então elas aparecem no Studio sem apertar Play. Depois é só abrir o
 
 No modo da opção A (`rojo serve`), o mapa só aparece quando você aperta Play.
 
-### 3. Salvar progresso no Studio
+### 3. Colocar a imagem do mapa
+
+O mapa da tela usa a imagem `assets/mapa-ilha.png`. Para ela aparecer no jogo, ela precisa ser enviada ao Roblox uma vez:
+
+1. No Studio, abra **Window → Asset Manager** (ou a aba **View → Asset Manager**).
+2. Clique em **Bulk Import** (ícone de enviar) e escolha `assets/mapa-ilha.png`.
+3. Quando terminar, clique com o botão direito na imagem e escolha **Copy Asset ID**.
+4. Em `src/shared/Config.luau`, cole o ID em `Config.MapImage`, assim:
+   `Config.MapImage = "rbxassetid://1234567890"`
+
+Enquanto isso não é feito, o mapa da tela mostra um desenho simples da ilha, com os mesmos pontos clicáveis.
+
+### 4. Salvar progresso no Studio
 
 O progresso usa DataStore. Para testar no Studio, publique o place e ative
 **Game Settings → Security → Enable Studio Access to API Services**.
 Sem isso o jogo funciona normalmente, só não salva (aparece um aviso no Output).
 
-### 4. Avatar
+### 5. Avatar
 
 O avatar de pinguim funciona com R15 e R6. O projeto já desliga a aparência do avatar do Roblox (`LoadCharacterAppearance = false`), então todo mundo aparece como pinguim.
 
@@ -65,6 +77,7 @@ rojo build -o build/base.rbxlx && lune run tools/bake-map build/base.rbxlx build
 ## Onde mexer
 
 - **Preços, recompensas, salas, velocidade da bola de neve:** `src/shared/Config.luau`
-- **Mapa ilustrado (botão 🗺️):** posição e ícone de cada lugar em `Config.Rooms[...].map` e `Config.MapComingSoon`; o desenho da ilha fica em `src/client/Controllers/MapController.luau`
-- **Visual das salas:** `src/server/Services/MapBuilder.luau`. Dá para trocar uma sala por um modelo feito no Studio, desde que as tags `Portal`, `ShopCounter` e `FishingSpot` continuem nas peças certas.
+- **Lugares da ilha (nome, ícone, ponto no mapa, onde o jogador aparece):** `Config.Rooms` em `src/shared/Config.luau`. As posições são em pixels da imagem `assets/mapa-ilha.png`.
+- **Formato da ilha (praias, grama, falésias, lagos):** `src/shared/IslandLayout.luau`
+- **Construções e decoração:** `src/server/Services/MapBuilder.luau`. Dá para trocar um lugar por um modelo feito no Studio, desde que as tags `ShopCounter` e `FishingSpot` continuem nas peças certas.
 - **Formato do pinguim:** tabela `PIECES` em `src/server/Services/PenguinAvatar.luau`

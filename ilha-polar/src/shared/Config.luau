@@ -6,58 +6,139 @@ local Config = {}
 Config.GameName = "Ilha Polar"
 
 ---------------------------------------------------------------------------
--- Salas
+-- Lugares da ilha
 ---------------------------------------------------------------------------
--- Cada sala é uma ilha separada no mesmo servidor. Trocar de sala = teleporte.
--- `spawn` é relativo ao centro da sala; `look` é para onde o jogador olha ao chegar.
--- `map` diz onde o lugar aparece no mapa ilustrado (0 a 1, da esquerda/topo).
+-- A ilha é uma só; cada lugar é uma região dela. O mapa da tela teleporta para
+-- o `spawn` do lugar, e a sala atual do jogador (atributo "Room") é o lugar
+-- mais perto dele.
+--
+-- Todas as posições estão em pixels da imagem do mapa (assets/mapa-ilha.png):
+--   map    onde fica o ponto clicável no mapa da tela
+--   spawn  onde o jogador aparece ao escolher o lugar
+--   look   para onde ele olha ao chegar
 
-Config.RoomSize = 160 -- lado da plataforma de cada sala (studs)
+-- ID da imagem do mapa depois de enviada ao Roblox (veja o README).
+-- Enquanto estiver vazio, o mapa da tela desenha a ilha a partir do layout.
+Config.MapImage = ""
 
 Config.Rooms = {
 	{
-		id = "Vila",
-		name = "Vila",
-		map = { position = Vector2.new(0.5, 0.55), icon = "🏘️", color = Color3.fromRGB(230, 90, 70) },
-		description = "O centro da ilha: café e loja de cores.",
-		center = Vector3.new(0, 0, 0),
-		spawn = Vector3.new(0, 0, 30),
-		look = Vector3.new(0, 0, -1),
-	},
-	{
 		id = "Praca",
 		name = "Praça",
-		map = { position = Vector2.new(0.72, 0.45), icon = "🎪", color = Color3.fromRGB(150, 90, 210) },
-		description = "Palco, fonte congelada e fortes para guerra de neve.",
-		center = Vector3.new(400, 0, 0),
-		spawn = Vector3.new(0, 0, 30),
-		look = Vector3.new(0, 0, -1),
+		icon = "⛲",
+		description = "O coração da ilha, com a fonte da estátua do pinguim.",
+		map = Vector2.new(790, 505),
+		spawn = Vector2.new(790, 600),
+		look = Vector2.new(790, 500),
 	},
 	{
-		id = "Doca",
-		name = "Doca",
-		map = { position = Vector2.new(0.33, 0.75), icon = "⚓", color = Color3.fromRGB(60, 140, 220) },
-		description = "Pesque no fim do píer e ganhe moedas.",
-		center = Vector3.new(0, 0, 400),
-		spawn = Vector3.new(0, 0, -30),
-		look = Vector3.new(0, 0, 1),
+		id = "Vila",
+		name = "Vila",
+		icon = "🏘️",
+		description = "Lojas e café. A Loja de Cores fica na casa azul.",
+		map = Vector2.new(540, 560),
+		spawn = Vector2.new(560, 640),
+		look = Vector2.new(525, 540),
 	},
 	{
-		id = "Montanha",
-		name = "Montanha",
-		map = { position = Vector2.new(0.3, 0.27), icon = "🛷", color = Color3.fromRGB(70, 170, 120) },
-		description = "Pista de trenó (em breve).",
-		center = Vector3.new(400, 0, 400),
-		spawn = Vector3.new(0, 0, -30),
-		look = Vector3.new(0, 0, 1),
+		id = "Porto",
+		name = "Porto",
+		icon = "⚓",
+		description = "Píeres e barco. Pesque na ponta dos píeres.",
+		map = Vector2.new(330, 670),
+		spawn = Vector2.new(455, 628),
+		look = Vector2.new(300, 650),
 	},
-}
-
--- Lugares que aparecem no mapa com cadeado, só para mostrar o que vem por aí.
-Config.MapComingSoon = {
-	{ name = "Farol", icon = "🗼", position = Vector2.new(0.11, 0.55) },
-	{ name = "Bairro dos Iglus", icon = "🛖", position = Vector2.new(0.55, 0.8) },
-	{ name = "Lago Congelado", icon = "⛸️", position = Vector2.new(0.8, 0.7) },
+	{
+		id = "Praia",
+		name = "Praia do Surfe",
+		icon = "🏄",
+		description = "Areia, guarda-sóis e a cabana de surfe.",
+		map = Vector2.new(360, 400),
+		spawn = Vector2.new(420, 445),
+		look = Vector2.new(330, 360),
+	},
+	{
+		id = "Farol",
+		name = "Farol",
+		icon = "🗼",
+		description = "A ponta oeste da ilha.",
+		map = Vector2.new(100, 505),
+		spawn = Vector2.new(165, 550),
+		look = Vector2.new(100, 505),
+	},
+	{
+		id = "Mirante",
+		name = "Mirante",
+		icon = "🚩",
+		description = "O ponto mais alto do oeste. Vista da ilha inteira.",
+		map = Vector2.new(640, 150),
+		spawn = Vector2.new(590, 205),
+		look = Vector2.new(640, 140),
+	},
+	{
+		id = "Cachoeira",
+		name = "Cachoeira",
+		icon = "💧",
+		description = "Cachoeira, piscina natural e ponte de corda.",
+		map = Vector2.new(820, 320),
+		spawn = Vector2.new(790, 420),
+		look = Vector2.new(840, 310),
+	},
+	{
+		id = "Templo",
+		name = "Templo",
+		icon = "🏛️",
+		description = "Ruínas antigas no alto do morro.",
+		map = Vector2.new(1150, 150),
+		spawn = Vector2.new(1140, 225),
+		look = Vector2.new(1150, 140),
+	},
+	{
+		id = "Acampamento",
+		name = "Acampamento",
+		icon = "⛺",
+		description = "Barracas e fogueira perto do lago.",
+		map = Vector2.new(1400, 360),
+		spawn = Vector2.new(1380, 430),
+		look = Vector2.new(1400, 370),
+	},
+	{
+		id = "Campo",
+		name = "Campo de Futebol",
+		icon = "⚽",
+		description = "Campo com arquibancada.",
+		map = Vector2.new(1220, 515),
+		spawn = Vector2.new(1085, 515),
+		look = Vector2.new(1220, 515),
+	},
+	{
+		id = "Bairro",
+		name = "Bairro",
+		icon = "🏡",
+		description = "As casinhas da ilha.",
+		map = Vector2.new(1000, 645),
+		spawn = Vector2.new(980, 712),
+		look = Vector2.new(1000, 640),
+	},
+	{
+		id = "Parque",
+		name = "Parque Aquático",
+		icon = "🛝",
+		description = "Lagoa com tobogãs e boias.",
+		map = Vector2.new(1500, 630),
+		spawn = Vector2.new(1330, 600),
+		look = Vector2.new(1480, 680),
+	},
+	{
+		id = "Pier",
+		name = "Píer do Veleiro",
+		icon = "⛵",
+		description = "Píer comprido do sul. Também dá para pescar.",
+		map = Vector2.new(1150, 835),
+		spawn = Vector2.new(1090, 762),
+		look = Vector2.new(1180, 880),
+	},
 }
 
 Config.RoomsById = {}
@@ -65,9 +146,9 @@ for _, room in Config.Rooms do
 	Config.RoomsById[room.id] = room
 end
 
-Config.StartRoom = "Vila"
+Config.StartRoom = "Praca"
 Config.RoomChangeCooldown = 2 -- segundos entre teleportes
-Config.OceanHeight = -6 -- abaixo disso (com margem) o jogador "caiu na água" e volta à sala
+Config.RescueHeight = -30 -- abaixo disso o jogador volta para o lugar em que estava
 
 ---------------------------------------------------------------------------
 -- Economia

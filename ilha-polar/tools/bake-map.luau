@@ -66,5 +66,5 @@ for _, d in map:GetDescendants() do
 end
 
 fs.writeFile(output, roblox.serializePlace(game, true))
-print(`Mapa gravado: {parts} peças. Tags: Portal={tags.Portal or 0}, ShopCounter={tags.ShopCounter or 0}, FishingSpot={tags.FishingSpot or 0}`)
+print(`Mapa gravado: {parts} peças. Tags: ShopCounter={tags.ShopCounter or 0}, FishingSpot={tags.FishingSpot or 0}`)
 print(`Arquivo salvo em {output}`)

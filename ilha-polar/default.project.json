@@ -16,7 +16,7 @@
       "$properties": {
         "CameraMode": "LockFirstPerson",
         "LoadCharacterAppearance": false,
-        "CharacterWalkSpeed": 16
+        "CharacterWalkSpeed": 20
       },
       "StarterPlayerScripts": {
         "Client": {
@@ -26,19 +26,35 @@
     },
     "Lighting": {
       "$properties": {
-        "ClockTime": 14,
-        "Brightness": 2.5,
-        "Ambient": [0.45, 0.5, 0.6],
-        "OutdoorAmbient": [0.6, 0.68, 0.8],
+        "ClockTime": 13.5,
+        "Brightness": 3,
+        "Ambient": [
+          0.5,
+          0.5,
+          0.55
+        ],
+        "OutdoorAmbient": [
+          0.65,
+          0.65,
+          0.7
+        ],
         "GlobalShadows": true
       },
       "Atmosphere": {
         "$className": "Atmosphere",
         "$properties": {
-          "Density": 0.3,
-          "Haze": 1.2,
-          "Color": [0.8, 0.88, 1.0],
-          "Decay": [0.6, 0.72, 0.9]
+          "Density": 0.22,
+          "Haze": 0.6,
+          "Color": [
+            0.78,
+            0.88,
+            1.0
+          ],
+          "Decay": [
+            0.55,
+            0.75,
+            0.95
+          ]
         }
       }
     },

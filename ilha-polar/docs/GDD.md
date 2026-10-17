@@ -4,7 +4,9 @@
 
 ## 1. A ideia
 
-Um lugar para encontrar amigos numa ilha nevada. Você é um pinguim, anda pelas salas, conversa, joga bola de neve, ganha moedas em minigames e gasta essas moedas para personalizar o pinguim (e, mais para frente, o iglu).
+Um lugar para encontrar amigos numa **ilha tropical**. Você é um pinguim, anda pela ilha, conversa, joga bola de neve, ganha moedas em minigames e gasta essas moedas para personalizar o pinguim (e, mais para frente, a casa).
+
+O mapa oficial da ilha é `assets/mapa-ilha.png`. O mundo 3D é montado a partir dele.
 
 A diferença para o original é a câmera: tudo é visto **pelos olhos do pinguim**. Isso deixa a guerra de bola de neve com cara de jogo de tiro (leve e sem dano), a pesca mais imersiva e as salas mais "de verdade".
 
@@ -18,6 +20,8 @@ O Club Penguin é da Disney. O Roblox remove jogos que usam marca ou arte de out
 | Salas ligadas por um mapa | Os "Puffles" (crie bichinhos próprios) |
 | Moedas, minigames, loja de roupas, iglus | Personagens como Rockhopper, Aunt Arctic, Gary |
 | Bola de neve, pesca, festas temáticas | Arte, músicas, logos, textos e nomes de salas copiados |
+
+A imagem do mapa original que serviu de base tinha um ícone de Puffle na barra do topo; a versão em `assets/` já vem sem essa barra.
 
 Regra prática: **mecânicas iguais, nomes e visual nossos.**
 
@@ -37,27 +41,38 @@ Regra prática: **mecânicas iguais, nomes e visual nossos.**
 | Cliques ficam presos (mouse no centro) | Janelas soltam o mouse ao abrir (`Modal`); atalhos de teclado (M = mapa) |
 | Enjoo de câmera | Sem balanço de câmera; FOV padrão; opção de 3ª pessoa no futuro, se os testes pedirem |
 
-## 5. Salas
+## 5. A ilha
 
-| Sala | Função | Estado |
+A ilha é **uma só e contínua**: dá para andar de um lugar ao outro pelos caminhos, ou ir direto pelo mapa. O lugar em que você está aparece no topo da tela.
+
+| Lugar | O que tem | Estado |
 |---|---|---|
-| **Vila** | Centro. Café e Loja de Cores. Ponto de nascimento. | ✅ protótipo |
-| **Praça** | Palco, fonte congelada, fortes de neve para guerra de bola de neve | ✅ protótipo |
-| **Doca** | Píer com pontos de pesca | ✅ protótipo |
-| **Montanha** | Pista de trenó | 🟡 cenário pronto, minigame em breve |
-| Iglu (privado) | Casa de cada jogador, decorável | ⏳ fase 2 |
+| **Praça** | Fonte com estátua do pinguim, bandeiras, bancos. Ponto de nascimento. | ✅ |
+| **Vila** | Café, Loja de Cores (casa azul), Sorveteria, Loja de Surfe | ✅ loja funciona |
+| **Porto** | Píeres e barco. Pesca na ponta dos píeres. | ✅ pesca funciona |
+| **Praia do Surfe** | Cabana de surfe, pranchas, guarda-sóis, espreguiçadeiras | ✅ cenário |
+| **Farol** | Farol listrado na ponta oeste | ✅ cenário |
+| **Mirante** | Falésias com escadas e o mirante com bandeira | ✅ cenário |
+| **Cachoeira** | Cachoeira, piscina natural e ponte de corda | ✅ cenário |
+| **Templo** | Ruínas no alto do morro, com tochas | ✅ cenário |
+| **Acampamento** | Barracas, fogueira, cabana e ponte sobre o lago | ✅ cenário |
+| **Campo de Futebol** | Campo com traves e arquibancada | 🟡 minigame em breve |
+| **Bairro** | Casinhas e gazebo | 🟡 casas dos jogadores na fase 2 |
+| **Parque Aquático** | Lagoa, torre e tobogãs, boias | 🟡 tobogãs decorativos |
+| **Píer do Veleiro** | Píer comprido do sul com veleiro. Também tem pesca. | ✅ pesca funciona |
 
-Trocar de sala: pelo **mapa** ou pelos **portais** azuis no chão de cada sala.
+**Mapa:** botão redondo 🗺️ no canto esquerdo (ou tecla M). Mostra a imagem oficial com um ponto clicável em cada lugar, que teleporta; o marcador "Você está aqui" fica em cima do lugar atual. Em primeira pessoa, segurar **Alt** solta o mouse para clicar nos botões da tela.
 
-**Mapa ilustrado:** botão redondo 🗺️ no canto esquerdo (ou tecla M). Abre uma ilha desenhada do zero com montanhas, pinheiros, píer e lago. Cada lugar é um ícone clicável que teleporta; o marcador "Você está aqui" flutua sobre a sala atual; lugares futuros (Farol, Bairro dos Iglus, Lago Congelado) aparecem com cadeado. Em primeira pessoa, segurar **Alt** solta o mouse para clicar nos botões da tela.
+**Como mexer na ilha:** todas as posições estão em pixels da imagem do mapa. O formato da terra fica em `src/shared/IslandLayout.luau`; os lugares (ponto do mapa e onde o jogador aparece) em `Config.Rooms`; as construções em `src/server/Services/MapBuilder.luau`.
 
-## 6. O que já está feito (versão 0.1)
+## 6. O que já está feito
 
 - Câmera travada em primeira pessoa.
 - Avatar de pinguim montado por código, colorido pela cor do jogador.
-- 4 salas, mapa e portais. Quem cai no mar volta para a sala.
+- Ilha completa com 13 lugares, montada a partir do mapa oficial e gravada dentro do arquivo do jogo (aparece no Studio sem apertar Play).
+- Mar de verdade (dá para nadar) quando o jogo está rodando.
 - **Bola de neve:** clique para jogar. O servidor cria a bola, controla o intervalo entre arremessos e avisa quem foi atingido (a tela fica branca).
-- **Pesca:** espere morder e puxe a tempo. Dá de 1 a 20 moedas. O tempo é contado no servidor, então não dá para trapacear.
+- **Pesca:** no Porto e no Píer do Veleiro. Espere morder e puxe a tempo. Dá de 1 a 20 moedas. O tempo é contado no servidor, então não dá para trapacear.
 - **Moedas e Loja de Cores:** 9 cores de 0 a 60 moedas.
 - **Progresso salvo** (DataStore): moedas, cores compradas, cor atual, peixes pescados.
 - Funciona no PC, no celular (botões de toque) e no controle.
@@ -75,7 +90,8 @@ Trocar de sala: pelo **mapa** ou pelos **portais** azuis no chão de cada sala.
 - Bichinho de estimação próprio (nome e design nossos) que segue o jogador.
 
 **Fase 4: Mais minigames**
-- Corrida de trenó na Montanha.
+- Futebol no Campo (partidas rápidas valendo moedas).
+- Tobogãs funcionando no Parque Aquático.
 - Café: atender pedidos (jogo de servir).
 - Dança no palco da Praça (ritmo).
 - Guerra de neve por times, com placar.
@@ -92,12 +108,12 @@ Trocar de sala: pelo **mapa** ou pelos **portais** azuis no chão de cada sala.
 - **Rojo + Luau.** O código vive no Git; o Studio só recebe os arquivos.
 - **Servidor manda.** O cliente só pede ("quero jogar uma bola nessa direção", "quero comprar a cor X"). O servidor valida tudo: intervalo entre ações, distância, saldo e tempo da pesca.
 - **Atributos do Player** (`Coins`, `Color`, `OwnedColors`, `Room`) espelham os dados para o cliente, sem precisar de remotes extras.
-- **Tags do CollectionService** (`Portal`, `ShopCounter`, `FishingSpot`) ligam o mapa aos sistemas. Quando o mapa de protótipo for trocado por um modelo feito no Studio, basta manter as tags.
+- **Tags do CollectionService** (`ShopCounter`, `FishingSpot`) ligam o mapa aos sistemas. Quando o mapa de protótipo for trocado por um modelo feito no Studio, basta manter as tags.
 - Valores de balanceamento ficam todos em `src/shared/Config.luau`.
 
 ```
 src/
-  shared/        Config (salas, preços, pesca, bola de neve) e Remotes
+  shared/        Config (lugares, preços, pesca, bola de neve), IslandLayout (formato da ilha) e Remotes
   server/
     Main.server.luau
     Services/    MapBuilder, DataService, PenguinAvatar, RoomService,

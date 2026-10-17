@@ -18,6 +18,7 @@ local ShopService = require(Services.ShopService)
 if not workspace:FindFirstChild("Mapa") then
 	MapBuilder.build()
 end
+MapBuilder.addWater()
 
 DataService.start()
 PenguinAvatar.start()

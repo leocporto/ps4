@@ -1,16 +1,35 @@
--- Troca de sala (pelo mapa ou pelos portais) e resgate de quem cai no mar.
--- A sala atual de cada jogador fica no atributo "Room" do Player.
+-- Teleporte para os lugares da ilha (pelo mapa) e "em que lugar estou".
+--
+-- A ilha é uma só: o lugar atual de cada jogador (atributo "Room" do Player)
+-- é o lugar do Config.Rooms mais perto dele, recalculado o tempo todo.
 
-local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local Layout = require(ReplicatedStorage.Shared.IslandLayout)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 
 local RoomService = {}
 
 local lastTeleport: { [Player]: number } = {}
+
+-- Acha o chão embaixo de um ponto (ignorando personagens).
+local function groundAt(position: Vector3): Vector3
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local characters = {}
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			table.insert(characters, player.Character)
+		end
+	end
+	params.FilterDescendantsInstances = characters
+
+	local origin = Vector3.new(position.X, 300, position.Z)
+	local result = workspace:Raycast(origin, Vector3.new(0, -400, 0), params)
+	return if result then result.Position else Vector3.new(position.X, 10, position.Z)
+end
 
 function RoomService.teleport(player: Player, roomId: string, force: boolean?): boolean
 	local room = Config.RoomsById[roomId]
@@ -26,28 +45,24 @@ function RoomService.teleport(player: Player, roomId: string, force: boolean?): 
 	lastTeleport[player] = now
 
 	-- Espalha um pouco para ninguém nascer em cima de ninguém.
-	local jitter = Vector3.new(math.random(-6, 6), 4, math.random(-6, 6))
-	local position = room.center + room.spawn + jitter
-	character:PivotTo(CFrame.lookAt(position, position + room.look))
+	local spot = Layout.toWorld(room.spawn.X, room.spawn.Y) + Vector3.new(math.random(-4, 4), 0, math.random(-4, 4))
+	local position = groundAt(spot) + Vector3.new(0, 4, 0)
+	local look = Layout.toWorld(room.look.X, room.look.Y, position.Y)
+	character:PivotTo(CFrame.lookAt(position, look))
 	player:SetAttribute("Room", room.id)
 	return true
 end
 
-local function portalTouched(portal: BasePart, hit: BasePart)
-	local character = hit:FindFirstAncestorOfClass("Model")
-	local player = character and Players:GetPlayerFromCharacter(character)
-	local destination = portal:GetAttribute("Destino")
-	if player and type(destination) == "string" then
-		RoomService.teleport(player, destination)
+local function nearestRoom(position: Vector3): string
+	local pixel = Layout.toImage(position)
+	local best, bestDistance = Config.StartRoom, math.huge
+	for _, room in Config.Rooms do
+		local distance = (room.map - pixel).Magnitude
+		if distance < bestDistance then
+			best, bestDistance = room.id, distance
+		end
 	end
-end
-
-local function watchPortal(portal: Instance)
-	if portal:IsA("BasePart") then
-		portal.Touched:Connect(function(hit)
-			portalTouched(portal, hit)
-		end)
-	end
+	return best
 end
 
 function RoomService.start()
@@ -57,38 +72,26 @@ function RoomService.start()
 		end
 	end)
 
-	for _, portal in CollectionService:GetTagged("Portal") do
-		watchPortal(portal)
-	end
-	CollectionService:GetInstanceAddedSignal("Portal"):Connect(watchPortal)
-
-	local function onPlayer(player: Player)
-		-- Todo personagem nasce no SpawnLocation da sala inicial.
-		player.CharacterAdded:Connect(function()
-			player:SetAttribute("Room", Config.StartRoom)
-		end)
-		if player.Character then
-			player:SetAttribute("Room", Config.StartRoom)
-		end
-	end
-	Players.PlayerAdded:Connect(onPlayer)
-	for _, player in Players:GetPlayers() do
-		onPlayer(player)
-	end
 	Players.PlayerRemoving:Connect(function(player)
 		lastTeleport[player] = nil
 	end)
 
-	-- Caiu no mar? Volta para o ponto de chegada da sala em que estava.
 	task.spawn(function()
 		while true do
-			task.wait(1)
+			task.wait(0.5)
 			for _, player in Players:GetPlayers() do
 				local character = player.Character
 				local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-				if root and root.Position.Y < Config.OceanHeight - 2 then
-					RoomService.teleport(player, player:GetAttribute("Room") or Config.StartRoom, true)
-					Remotes.event("Notify"):FireClient(player, "Splash! A água está gelada demais 🥶")
+				if root then
+					if root.Position.Y < Config.RescueHeight then
+						-- Caiu para fora do mapa: volta para o lugar em que estava.
+						RoomService.teleport(player, player:GetAttribute("Room") or Config.StartRoom, true)
+					else
+						local room = nearestRoom(root.Position)
+						if player:GetAttribute("Room") ~= room then
+							player:SetAttribute("Room", room)
+						end
+					end
 				end
 			end
 		end
