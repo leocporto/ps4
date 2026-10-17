@@ -47,7 +47,9 @@ Regra prática: **mecânicas iguais, nomes e visual nossos.**
 | **Montanha** | Pista de trenó | 🟡 cenário pronto, minigame em breve |
 | Iglu (privado) | Casa de cada jogador, decorável | ⏳ fase 2 |
 
-Trocar de sala: pelo **mapa** (tecla M ou botão) ou pelos **portais** azuis no chão de cada sala.
+Trocar de sala: pelo **mapa** ou pelos **portais** azuis no chão de cada sala.
+
+**Mapa ilustrado:** botão redondo 🗺️ no canto esquerdo (ou tecla M). Abre uma ilha desenhada do zero com montanhas, pinheiros, píer e lago. Cada lugar é um ícone clicável que teleporta; o marcador "Você está aqui" flutua sobre a sala atual; lugares futuros (Farol, Bairro dos Iglus, Lago Congelado) aparecem com cadeado. Em primeira pessoa, segurar **Alt** solta o mouse para clicar nos botões da tela.
 
 ## 6. O que já está feito (versão 0.1)
 

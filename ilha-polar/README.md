@@ -23,11 +23,16 @@ O projeto usa o [Rojo](https://rojo.space), que leva os arquivos `.luau` desta p
 2. No Studio, abra um place vazio (Baseplate), apague a peça "Baseplate", abra o plugin do Rojo e clique em **Connect**.
 3. Aperte **Play**. Toda vez que você salvar um arquivo aqui, o Studio atualiza sozinho.
 
-**Opção B: gerar o arquivo do place**
+**Opção B: gerar o arquivo do place (com o mapa já montado)**
 ```
-rojo build -o IlhaPolar.rbxlx
+rojo build -o build/base.rbxlx
+lune run tools/bake-map build/base.rbxlx IlhaPolar.rbxlx
 ```
-Depois é só abrir o `IlhaPolar.rbxlx` no Studio.
+O segundo comando roda o construtor do mapa e grava as salas dentro do arquivo,
+então elas aparecem no Studio sem apertar Play. Depois é só abrir o
+`IlhaPolar.rbxlx` no Studio.
+
+No modo da opção A (`rojo serve`), o mapa só aparece quando você aperta Play.
 
 ### 3. Salvar progresso no Studio
 
@@ -44,7 +49,8 @@ O avatar de pinguim funciona com R15 e R6. O projeto já desliga a aparência do
 | Ação | PC | Celular | Controle |
 |---|---|---|---|
 | Jogar bola de neve | Clique | Botão ❄ | R2 |
-| Mapa | M | Botão "Mapa" | (botão na tela) |
+| Mapa | M (ou Alt + clique no botão 🗺️) | Botão 🗺️ | (botão na tela) |
+| Soltar o mouse | Segurar Alt | — | — |
 | Interagir (loja, pesca) | E | Tocar no balão | X |
 | Puxar o peixe | Clique ou Espaço | Tocar no aviso | A |
 
@@ -53,11 +59,12 @@ O avatar de pinguim funciona com R15 e R6. O projeto já desliga a aparência do
 ```
 stylua src          # formata
 selene src          # lint
-rojo build -o IlhaPolar.rbxlx   # confere se o projeto monta
+rojo build -o build/base.rbxlx && lune run tools/bake-map build/base.rbxlx build/IlhaPolar.rbxlx   # monta e testa o mapa
 ```
 
 ## Onde mexer
 
 - **Preços, recompensas, salas, velocidade da bola de neve:** `src/shared/Config.luau`
+- **Mapa ilustrado (botão 🗺️):** posição e ícone de cada lugar em `Config.Rooms[...].map` e `Config.MapComingSoon`; o desenho da ilha fica em `src/client/Controllers/MapController.luau`
 - **Visual das salas:** `src/server/Services/MapBuilder.luau`. Dá para trocar uma sala por um modelo feito no Studio, desde que as tags `Portal`, `ShopCounter` e `FishingSpot` continuem nas peças certas.
 - **Formato do pinguim:** tabela `PIECES` em `src/server/Services/PenguinAvatar.luau`

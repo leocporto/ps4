@@ -3,12 +3,11 @@
 --
 -- É um mapa "de protótipo" feito com peças simples. Depois dá para trocar
 -- cada sala por um modelo feito no Studio sem mexer nos serviços, porque eles
--- só procuram as tags do CollectionService:
+-- só procuram as tags (CollectionService):
 --   "Portal"       atributo Destino = id da sala
 --   "ShopCounter"  tem um ProximityPrompt com atributo Action = "Shop"
 --   "FishingSpot"  tem um ProximityPrompt
 
-local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
@@ -290,7 +289,7 @@ local function portals(folder: Instance, room, z: number)
 			Parent = folder,
 		})
 		pad:SetAttribute("Destino", other.id)
-		CollectionService:AddTag(pad, "Portal")
+		pad:AddTag("Portal")
 		label(pad, "➜ " .. other.name, 5)
 
 		local light = Instance.new("PointLight")
@@ -351,7 +350,7 @@ function builders.Vila(folder: Folder, room)
 		Material = Enum.Material.WoodPlanks,
 		Parent = shop,
 	})
-	CollectionService:AddTag(counter, "ShopCounter")
+	counter:AddTag("ShopCounter")
 	prompt(counter, "Abrir loja", "Loja de Cores", "Shop")
 	for i, item in Config.Colors do
 		-- Latas de tinta na prateleira, só de enfeite.
@@ -538,7 +537,7 @@ function builders.Doca(folder: Folder, room)
 			Material = Enum.Material.Wood,
 			Parent = folder,
 		})
-		CollectionService:AddTag(spot, "FishingSpot")
+		spot:AddTag("FishingSpot")
 		prompt(spot, "Pescar", "Ponto de pesca", "Fish")
 	end
 

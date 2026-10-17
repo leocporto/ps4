@@ -105,7 +105,7 @@ end
 
 -- Janela centralizada com título e botão de fechar.
 -- Retorna o frame de conteúdo e funções para abrir/fechar.
-function Hud.panel(name: string, title: string, size: UDim2)
+function Hud.panel(name: string, title: string, size: UDim2, maxSize: Vector2?)
 	local frame = create("Frame", {
 		Name = name,
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -116,7 +116,7 @@ function Hud.panel(name: string, title: string, size: UDim2)
 		Visible = false,
 		Parent = gui,
 	}, { Hud.corner(16) })
-	create("UISizeConstraint", { MaxSize = Vector2.new(720, 560), Parent = frame })
+	create("UISizeConstraint", { MaxSize = maxSize or Vector2.new(720, 560), Parent = frame })
 
 	Hud.label({
 		Size = UDim2.new(1, -80, 0, 44),
@@ -251,8 +251,8 @@ function Hud.start()
 			Name = "Dicas",
 			AnchorPoint = Vector2.new(0.5, 1),
 			Position = UDim2.new(0.5, 0, 1, -12),
-			Size = UDim2.fromOffset(560, 26),
-			Text = "Clique: bola de neve   •   M: mapa   •   E: interagir   •   /: chat",
+			Size = UDim2.fromOffset(680, 26),
+			Text = "Clique: bola de neve   •   M: mapa   •   Alt: soltar o mouse   •   E: interagir",
 			TextTransparency = 0.15,
 			TextStrokeTransparency = 0.5,
 			Parent = gui,
@@ -273,6 +273,30 @@ function Hud.start()
 			SortOrder = Enum.SortOrder.LayoutOrder,
 		}),
 	})
+
+	-- Segurar Alt solta o mouse da primeira pessoa para clicar nos botões da tela.
+	local freeMouse = create("TextButton", {
+		Name = "SoltarMouse",
+		Size = UDim2.fromOffset(1, 1),
+		BackgroundTransparency = 1,
+		Text = "",
+		Modal = true,
+		Visible = false,
+		Parent = gui,
+	})
+	local function isAlt(input: InputObject)
+		return input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt
+	end
+	UserInputService.InputBegan:Connect(function(input)
+		if isAlt(input) then
+			freeMouse.Visible = true
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if isAlt(input) then
+			freeMouse.Visible = false
+		end
+	end)
 
 	Remotes.event("Notify").OnClientEvent:Connect(function(text)
 		Hud.toast(text)

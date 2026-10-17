@@ -10,6 +10,7 @@ Config.GameName = "Ilha Polar"
 ---------------------------------------------------------------------------
 -- Cada sala é uma ilha separada no mesmo servidor. Trocar de sala = teleporte.
 -- `spawn` é relativo ao centro da sala; `look` é para onde o jogador olha ao chegar.
+-- `map` diz onde o lugar aparece no mapa ilustrado (0 a 1, da esquerda/topo).
 
 Config.RoomSize = 160 -- lado da plataforma de cada sala (studs)
 
@@ -17,6 +18,7 @@ Config.Rooms = {
 	{
 		id = "Vila",
 		name = "Vila",
+		map = { position = Vector2.new(0.5, 0.55), icon = "🏘️", color = Color3.fromRGB(230, 90, 70) },
 		description = "O centro da ilha: café e loja de cores.",
 		center = Vector3.new(0, 0, 0),
 		spawn = Vector3.new(0, 0, 30),
@@ -25,6 +27,7 @@ Config.Rooms = {
 	{
 		id = "Praca",
 		name = "Praça",
+		map = { position = Vector2.new(0.72, 0.45), icon = "🎪", color = Color3.fromRGB(150, 90, 210) },
 		description = "Palco, fonte congelada e fortes para guerra de neve.",
 		center = Vector3.new(400, 0, 0),
 		spawn = Vector3.new(0, 0, 30),
@@ -33,6 +36,7 @@ Config.Rooms = {
 	{
 		id = "Doca",
 		name = "Doca",
+		map = { position = Vector2.new(0.33, 0.75), icon = "⚓", color = Color3.fromRGB(60, 140, 220) },
 		description = "Pesque no fim do píer e ganhe moedas.",
 		center = Vector3.new(0, 0, 400),
 		spawn = Vector3.new(0, 0, -30),
@@ -41,11 +45,19 @@ Config.Rooms = {
 	{
 		id = "Montanha",
 		name = "Montanha",
+		map = { position = Vector2.new(0.3, 0.27), icon = "🛷", color = Color3.fromRGB(70, 170, 120) },
 		description = "Pista de trenó (em breve).",
 		center = Vector3.new(400, 0, 400),
 		spawn = Vector3.new(0, 0, -30),
 		look = Vector3.new(0, 0, 1),
 	},
+}
+
+-- Lugares que aparecem no mapa com cadeado, só para mostrar o que vem por aí.
+Config.MapComingSoon = {
+	{ name = "Farol", icon = "🗼", position = Vector2.new(0.11, 0.55) },
+	{ name = "Bairro dos Iglus", icon = "🛖", position = Vector2.new(0.55, 0.8) },
+	{ name = "Lago Congelado", icon = "⛸️", position = Vector2.new(0.8, 0.7) },
 }
 
 Config.RoomsById = {}

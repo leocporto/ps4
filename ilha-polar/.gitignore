@@ -4,3 +4,4 @@
 *.rbxlx.lock
 roblox.yml
 sourcemap.json
+build/
